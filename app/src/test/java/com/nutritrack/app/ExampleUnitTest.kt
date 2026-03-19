@@ -1,4 +1,4 @@
-package com.example.nutritrack
+package com.nutritrack.app
 
 import org.junit.Test
 

@@ -1,6 +1,5 @@
-package com.example.nutritrack.ui.theme
+package com.nutritrack.app.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme

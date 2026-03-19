@@ -1,4 +1,4 @@
-package com.example.nutritrack.ui.theme
+package com.nutritrack.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
