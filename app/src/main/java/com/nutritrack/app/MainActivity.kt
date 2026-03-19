@@ -4,6 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.compose.rememberNavController
+import com.nutritrack.app.ui.navigation.NutriTrackNavGraph
+import com.nutritrack.app.ui.navigation.Screen
+import com.nutritrack.app.ui.onboarding.OnboardingViewModel
 import com.nutritrack.app.ui.theme.NutriTrackTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -14,7 +21,21 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NutriTrackTheme {
-                // Navigation will be wired here in Step 4
+                val navController = rememberNavController()
+                val onboardingVm: OnboardingViewModel = hiltViewModel()
+
+                var startDestination by remember { mutableStateOf<String?>(null) }
+
+                LaunchedEffect(Unit) {
+                    startDestination = Screen.Welcome.route
+                }
+
+                startDestination?.let { start ->
+                    NutriTrackNavGraph(
+                        navController    = navController,
+                        startDestination = start
+                    )
+                }
             }
         }
     }
