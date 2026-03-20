@@ -11,20 +11,32 @@ import javax.inject.Singleton
 class CalorieCalculator @Inject constructor() {
 
     /**
-     * Mifflin-St Jeor BMR formula
-     * Male:   BMR = (10 × weight kg) + (6.25 × height cm) − (5 × age) + 5
-     * Female: BMR = (10 × weight kg) + (6.25 × height cm) − (5 × age) − 161
+     * Katch-McArdle BMR — most accurate when body fat % is known.
+     * BMR = 370 + (21.6 × lean body mass in kg)
+     *
+     * Falls back to Mifflin-St Jeor if body fat is 0 or unknown.
      */
     fun calculateBMR(
         weightKg: Float,
         heightCm: Float,
         age: Int,
-        sex: Sex
+        sex: Sex,
+        bodyFatPercent: Float = 0f
     ): Float {
-        val base = (10f * weightKg) + (6.25f * heightCm) - (5f * age)
-        return if (sex == Sex.MALE) base + 5f else base - 161f
+        return if (bodyFatPercent > 0f) {
+            // Katch-McArdle (uses LBM — more accurate for body recomposition)
+            val leanMassKg = weightKg * (1f - (bodyFatPercent / 100f))
+            370f + (21.6f * leanMassKg)
+        } else {
+            // Mifflin-St Jeor fallback
+            val base = (10f * weightKg) + (6.25f * heightCm) - (5f * age)
+            if (sex == Sex.MALE) base + 5f else base - 161f
+        }
     }
 
+    /**
+     * TDEE = BMR × activity multiplier
+     */
     fun calculateTDEE(bmr: Float, activityLevel: ActivityLevel): Float {
         val multiplier = when (activityLevel) {
             ActivityLevel.SEDENTARY         -> 1.2f
@@ -38,51 +50,32 @@ class CalorieCalculator @Inject constructor() {
 
     /**
      * Adjust TDEE based on goal:
-     * - Lose weight:         −500 kcal/day
-     * - Maintain:            no change
-     * - Gain muscle:         +300 kcal/day (lean bulk)
-     * - Body recomposition:  TDEE (maintenance) — body recomp works at maintenance
-     *   with a slight lean towards deficit if fat% is far from target,
-     *   or slight surplus if muscle% is far from target
+     * - Lose weight:    −500 kcal/day (≈ 0.5 kg/week loss)
+     * - Maintain:        no change
+     * - Gain muscle:    +300 kcal/day (lean bulk)
      */
-    fun calculateDailyCalorieTarget(
-        tdee: Float,
-        goal: Goal,
-        currentBodyFatPercent: Float = 0f,
-        targetBodyFatPercent: Float? = null,
-        currentMuscleMassPercent: Float = 0f,
-        targetMuscleMassPercent: Float? = null
-    ): Int {
+    fun calculateDailyCalorieTarget(tdee: Float, goal: Goal): Int {
         val adjusted = when (goal) {
-            Goal.LOSE_WEIGHT         -> tdee - 500f
-            Goal.MAINTAIN_WEIGHT     -> tdee
-            Goal.GAIN_MUSCLE         -> tdee + 300f
-            Goal.BODY_RECOMPOSITION  -> {
-                val fatGap    = targetBodyFatPercent?.let { currentBodyFatPercent - it } ?: 0f
-                val muscleGap = targetMuscleMassPercent?.let { it - currentMuscleMassPercent } ?: 0f
-                when {
-                    // Fat loss is the priority (fat% is significantly above target)
-                    fatGap > 5f    -> tdee - 250f
-                    // Muscle gain is the priority (muscle% is significantly below target)
-                    muscleGap > 5f -> tdee + 150f
-                    // Close to targets — pure maintenance
-                    else           -> tdee
-                }
-            }
+            Goal.LOSE_WEIGHT     -> tdee - 500f
+            Goal.MAINTAIN_WEIGHT -> tdee
+            Goal.GAIN_MUSCLE     -> tdee + 300f
+            Goal.BODY_RECOMPOSITION -> tdee - 250f  // mild deficit for recomposition
         }
         return adjusted.toInt().coerceAtLeast(1200)
     }
 
+    /**
+     * Convenience — calculate everything from a UserProfile
+     */
     fun calculateFromProfile(profile: UserProfile): Int {
-        val bmr  = calculateBMR(profile.weightKg, profile.heightCm, profile.age, profile.sex)
-        val tdee = calculateTDEE(bmr, profile.activityLevel)
-        return calculateDailyCalorieTarget(
-            tdee                    = tdee,
-            goal                    = profile.goal,
-            currentBodyFatPercent   = profile.bodyFatPercent,
-            targetBodyFatPercent    = profile.targetBodyFatPercent,
-            currentMuscleMassPercent = profile.muscleMassPercent,
-            targetMuscleMassPercent = profile.targetMuscleMassPercent
+        val bmr  = calculateBMR(
+            weightKg       = profile.weightKg,
+            heightCm       = profile.heightCm,
+            age            = profile.age,
+            sex            = profile.sex,
+            bodyFatPercent = profile.bodyFatPercent
         )
+        val tdee = calculateTDEE(bmr, profile.activityLevel)
+        return calculateDailyCalorieTarget(tdee, profile.goal)
     }
 }

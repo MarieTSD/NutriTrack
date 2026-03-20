@@ -10,73 +10,82 @@ import javax.inject.Singleton
 class ProteinCalculator @Inject constructor() {
 
     /**
-     * Protein guidelines (g per kg of body weight):
+     * Protein calculation using lean body mass (LBM) for best accuracy.
      *
-     * Sedentary:            0.8  g/kg
-     * Lightly active:       1.0  g/kg
-     * Moderately active:    1.4  g/kg
-     * Very active:          1.8  g/kg
-     * Extra active:         2.0  g/kg
+     * LBM = total weight × (1 - body fat %)
      *
-     * Goal modifiers:
-     * - Lose weight:           +0.2 g/kg (preserve muscle in deficit)
-     * - Gain muscle:           +0.2 g/kg (support hypertrophy)
-     * - Body recomposition:    +0.4 g/kg (highest — support simultaneous
-     *                          fat loss AND muscle gain)
-     * - Maintain:              no modifier
+     * Multipliers per goal:
+     * - Lose weight (recomposition): 2.2 g/kg LBM — protects muscle in deficit
+     * - Maintain:                    1.8 g/kg LBM
+     * - Gain muscle:                 2.4 g/kg LBM — supports hypertrophy
      *
-     * Older adults (65+): minimum 1.0 g/kg
+     * Activity modifier:
+     * - Sedentary:         ×0.9  (reduce slightly)
+     * - Lightly active:    ×1.0
+     * - Moderately active: ×1.0
+     * - Very active:       ×1.1  (increase for heavy training)
+     * - Extra active:      ×1.2
+     *
+     * Older adults (65+): minimum 1.0 g/kg total body weight
      */
     fun calculateDailyProteinTarget(
         weightKg: Float,
+        bodyFatPercent: Float,
         age: Int,
         activityLevel: ActivityLevel,
         goal: Goal
     ): Int {
-        var gPerKg = when (activityLevel) {
-            ActivityLevel.SEDENTARY         -> 0.8f
+        // Calculate lean body mass
+        val leanMassKg = weightKg * (1f - (bodyFatPercent / 100f))
+
+        // Base g/kg of LBM by goal
+        var gPerKgLbm = when (goal) {
+            Goal.LOSE_WEIGHT     -> 2.2f  // preserve muscle in deficit
+            Goal.MAINTAIN_WEIGHT -> 1.8f
+            Goal.GAIN_MUSCLE     -> 2.4f  // support hypertrophy
+            Goal.BODY_RECOMPOSITION -> 2.4f  // high protein for recomposition
+        }
+
+        // Activity modifier
+        val activityMod = when (activityLevel) {
+            ActivityLevel.SEDENTARY         -> 0.9f
             ActivityLevel.LIGHTLY_ACTIVE    -> 1.0f
-            ActivityLevel.MODERATELY_ACTIVE -> 1.4f
-            ActivityLevel.VERY_ACTIVE       -> 1.8f
-            ActivityLevel.EXTRA_ACTIVE      -> 2.0f
+            ActivityLevel.MODERATELY_ACTIVE -> 1.0f
+            ActivityLevel.VERY_ACTIVE       -> 1.1f
+            ActivityLevel.EXTRA_ACTIVE      -> 1.2f
         }
+        gPerKgLbm *= activityMod
 
-        gPerKg += when (goal) {
-            Goal.LOSE_WEIGHT        -> 0.2f
-            Goal.GAIN_MUSCLE        -> 0.2f
-            Goal.BODY_RECOMPOSITION -> 0.4f  // highest protein demand
-            Goal.MAINTAIN_WEIGHT    -> 0.0f
-        }
+        val calculated = leanMassKg * gPerKgLbm
 
-        // Older adult floor
-        if (age >= 65) gPerKg = gPerKg.coerceAtLeast(1.0f)
+        // Older adult floor: minimum 1.0 g/kg total body weight
+        val floor = if (age >= 65) weightKg * 1.0f else 0f
 
-        return (weightKg * gPerKg).toInt()
+        return calculated.coerceAtLeast(floor).toInt()
     }
 
+    /**
+     * Convenience — calculate from a UserProfile
+     */
     fun calculateFromProfile(profile: UserProfile): Int =
         calculateDailyProteinTarget(
-            weightKg      = profile.weightKg,
-            age           = profile.age,
-            activityLevel = profile.activityLevel,
-            goal          = profile.goal
+            weightKg       = profile.weightKg,
+            bodyFatPercent = profile.bodyFatPercent,
+            age            = profile.age,
+            activityLevel  = profile.activityLevel,
+            goal           = profile.goal
         )
 
-    fun getRecommendationLabel(activityLevel: ActivityLevel, age: Int, goal: Goal): String {
-        if (age >= 65) return "Older adult — minimum 1.0 g/kg to prevent muscle loss"
-        val base = when (activityLevel) {
-            ActivityLevel.SEDENTARY         -> "Sedentary — 0.8 g/kg"
-            ActivityLevel.LIGHTLY_ACTIVE    -> "Lightly active — 1.0 g/kg"
-            ActivityLevel.MODERATELY_ACTIVE -> "Moderately active — 1.4 g/kg"
-            ActivityLevel.VERY_ACTIVE       -> "Active/athlete — 1.8 g/kg"
-            ActivityLevel.EXTRA_ACTIVE      -> "Very active — 2.0 g/kg"
+    /**
+     * Human-readable explanation shown on results screen
+     */
+    fun getRecommendationLabel(goal: Goal, leanMassKg: Float): String {
+        val gPerKg = when (goal) {
+            Goal.LOSE_WEIGHT     -> "2.2"
+            Goal.MAINTAIN_WEIGHT -> "1.8"
+            Goal.GAIN_MUSCLE     -> "2.4"
+            Goal.BODY_RECOMPOSITION -> "2.4"
         }
-        val modifier = when (goal) {
-            Goal.LOSE_WEIGHT        -> " +0.2 g/kg (muscle preservation)"
-            Goal.GAIN_MUSCLE        -> " +0.2 g/kg (hypertrophy)"
-            Goal.BODY_RECOMPOSITION -> " +0.4 g/kg (recomposition priority)"
-            Goal.MAINTAIN_WEIGHT    -> ""
-        }
-        return base + modifier
+        return "$gPerKg g × ${String.format("%.1f", leanMassKg)} kg lean mass"
     }
 }
