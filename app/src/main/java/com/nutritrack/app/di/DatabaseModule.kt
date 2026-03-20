@@ -23,9 +23,9 @@ object DatabaseModule {
             "nutritrack.db"
         ).build()
 
-    @Provides fun provideUserProfileDao(db: NutriTrackDatabase) = db.userProfileDao()
-    @Provides fun provideFoodItemDao(db: NutriTrackDatabase) = db.foodItemDao()
-    @Provides fun provideFoodLogDao(db: NutriTrackDatabase) = db.foodLogDao()
-    @Provides fun provideWaterLogDao(db: NutriTrackDatabase) = db.waterLogDao()
+    @Provides fun provideUserProfileDao(db: NutriTrackDatabase)  = db.userProfileDao()
+    @Provides fun provideFoodItemDao(db: NutriTrackDatabase)      = db.foodItemDao()
+    @Provides fun provideFoodLogDao(db: NutriTrackDatabase)       = db.foodLogDao()
+    @Provides fun provideWaterLogDao(db: NutriTrackDatabase)      = db.waterLogDao()
     @Provides fun provideSupplementLogDao(db: NutriTrackDatabase) = db.supplementLogDao()
 }

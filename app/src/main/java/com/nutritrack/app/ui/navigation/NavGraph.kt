@@ -5,18 +5,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.nutritrack.app.ui.dashboard.DashboardScreen
+import com.nutritrack.app.ui.foodlog.FoodLogScreen
 import com.nutritrack.app.ui.onboarding.OnboardingViewModel
 import com.nutritrack.app.ui.onboarding.screens.*
 
 sealed class Screen(val route: String) {
-    // Onboarding
     object Welcome     : Screen("welcome")
     object BodyInfo    : Screen("body_info")
     object GoalResult  : Screen("goal_result")
-    // Main app
     object Dashboard   : Screen("dashboard")
     object FoodLog     : Screen("food_log")
-    object FoodSearch  : Screen("food_search")
     object Water       : Screen("water")
     object Supplements : Screen("supplements")
 }
@@ -36,7 +34,6 @@ fun NutriTrackNavGraph(
                 viewModel = vm
             )
         }
-
         composable(Screen.BodyInfo.route) {
             val vm: OnboardingViewModel = hiltViewModel()
             BodyInfoScreen(
@@ -45,7 +42,6 @@ fun NutriTrackNavGraph(
                 viewModel = vm
             )
         }
-
         composable(Screen.GoalResult.route) {
             val vm: OnboardingViewModel = hiltViewModel()
             GoalResultScreen(
@@ -67,9 +63,10 @@ fun NutriTrackNavGraph(
                 }
             )
         }
-
-        // Placeholders — filled in next steps
-        composable(Screen.FoodLog.route) { }
-        composable(Screen.FoodSearch.route) { }
+        composable(Screen.FoodLog.route) {
+            FoodLogScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
