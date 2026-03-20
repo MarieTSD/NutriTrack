@@ -4,17 +4,18 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 enum class ActivityLevel {
-    SEDENTARY,          // Little or no exercise
-    LIGHTLY_ACTIVE,     // Light exercise 1–3 days/week
-    MODERATELY_ACTIVE,  // Moderate exercise 3–5 days/week
-    VERY_ACTIVE,        // Hard exercise 6–7 days/week
-    EXTRA_ACTIVE        // Very hard exercise + physical job
+    SEDENTARY,
+    LIGHTLY_ACTIVE,
+    MODERATELY_ACTIVE,
+    VERY_ACTIVE,
+    EXTRA_ACTIVE
 }
 
 enum class Goal {
     LOSE_WEIGHT,
     MAINTAIN_WEIGHT,
-    GAIN_MUSCLE
+    GAIN_MUSCLE,
+    BODY_RECOMPOSITION  // Target specific muscle % and fat %
 }
 
 enum class Sex {
@@ -24,7 +25,7 @@ enum class Sex {
 
 @Entity(tableName = "user_profile")
 data class UserProfile(
-    @PrimaryKey val id: Int = 1, // Single profile — always ID 1
+    @PrimaryKey val id: Int = 1,
     val name: String = "",
     val age: Int = 25,
     val sex: Sex = Sex.MALE,
@@ -34,7 +35,10 @@ data class UserProfile(
     val bodyFatPercent: Float = 20f,
     val activityLevel: ActivityLevel = ActivityLevel.MODERATELY_ACTIVE,
     val goal: Goal = Goal.MAINTAIN_WEIGHT,
-    // Calculated & stored targets
+    // Body recomposition targets
+    val targetMuscleMassPercent: Float? = null,  // null = not set
+    val targetBodyFatPercent: Float? = null,     // null = not set
+    // Calculated targets
     val dailyCalorieTarget: Int = 2000,
     val dailyProteinTargetG: Int = 120,
     val dailyWaterTargetMl: Int = 2500,
