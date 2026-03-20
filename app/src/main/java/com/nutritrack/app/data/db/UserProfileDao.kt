@@ -15,6 +15,9 @@ interface UserProfileDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(profile: UserProfile)
 
+    @Query("DELETE FROM user_profile WHERE id = 1")
+    suspend fun deleteProfile()
+
     @Query("UPDATE user_profile SET isOnboardingComplete = 1 WHERE id = 1")
     suspend fun markOnboardingComplete()
 }

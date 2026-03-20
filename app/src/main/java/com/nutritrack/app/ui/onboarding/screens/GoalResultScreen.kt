@@ -6,6 +6,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,10 +29,10 @@ private data class GoalOption(
 )
 
 private val goalOptions = listOf(
-    GoalOption(Goal.LOSE_WEIGHT,         "Lose weight",          "−500 kcal/day deficit"),
-    GoalOption(Goal.MAINTAIN_WEIGHT,     "Maintain weight",      "Stay at TDEE"),
-    GoalOption(Goal.GAIN_MUSCLE,         "Gain muscle",          "+300 kcal/day surplus"),
-    GoalOption(Goal.BODY_RECOMPOSITION,  "Body recomposition",   "Lose fat + build muscle")
+    GoalOption(Goal.LOSE_WEIGHT,        "Lose weight",        "−500 kcal/day deficit"),
+    GoalOption(Goal.MAINTAIN_WEIGHT,    "Maintain weight",    "Stay at TDEE"),
+    GoalOption(Goal.GAIN_MUSCLE,        "Gain muscle",        "+300 kcal/day surplus"),
+    GoalOption(Goal.BODY_RECOMPOSITION, "Body recomposition", "Lose fat + build muscle")
 )
 
 @Composable
@@ -44,7 +46,6 @@ fun GoalResultScreen(
     LaunchedEffect(state.goal, state.targetBodyFatPercent, state.targetMuscleMassPercent) {
         viewModel.calculateTargets()
     }
-
     LaunchedEffect(state.isComplete) { if (state.isComplete) onFinish() }
 
     Column(
@@ -89,20 +90,13 @@ fun GoalResultScreen(
                                 onClick  = { viewModel.setGoal(option.goal) }
                             )
                             Column {
+                                Text(option.title, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                                 Text(
-                                    option.title,
-                                    fontWeight = FontWeight.SemiBold,
-                                    fontSize = 15.sp
-                                )
-                                Text(
-                                    option.subtitle,
-                                    fontSize = 13.sp,
+                                    option.subtitle, fontSize = 13.sp,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                 )
                             }
                         }
-
-                        // ── Recomposition target inputs ───────────
                         if (option.goal == Goal.BODY_RECOMPOSITION &&
                             state.goal == Goal.BODY_RECOMPOSITION) {
                             Spacer(Modifier.height(12.dp))
@@ -120,9 +114,7 @@ fun GoalResultScreen(
                                     onValueChange = viewModel::setTargetMuscleMass,
                                     label = { Text("Target muscle %") },
                                     singleLine = true,
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Decimal
-                                    ),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     modifier = Modifier.weight(1f),
                                     suffix = { Text("%") }
                                 )
@@ -131,9 +123,7 @@ fun GoalResultScreen(
                                     onValueChange = viewModel::setTargetBodyFat,
                                     label = { Text("Target fat %") },
                                     singleLine = true,
-                                    keyboardOptions = KeyboardOptions(
-                                        keyboardType = KeyboardType.Decimal
-                                    ),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                     modifier = Modifier.weight(1f),
                                     suffix = { Text("%") }
                                 )
@@ -147,34 +137,129 @@ fun GoalResultScreen(
         // ── Results ───────────────────────────────────────────────
         if (state.calculatedCalories > 0) {
             HorizontalDivider()
-            Text("Your daily targets", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+
+            // Header with edit toggle
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Your daily targets", fontWeight = FontWeight.Bold, fontSize = 17.sp)
+                Row {
+                    if (state.isEditingTargets) {
+                        IconButton(onClick = { viewModel.resetToCalculated() }) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Reset to calculated",
+                                tint = MaterialTheme.colorScheme.secondary
+                            )
+                        }
+                    }
+                    IconButton(onClick = { viewModel.toggleEditingTargets() }) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = "Edit targets",
+                            tint = if (state.isEditingTargets)
+                                MaterialTheme.colorScheme.primary
+                            else
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                }
+            }
+
+            // ── Always show the result cards (live update) ────────
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 MacroResultCard(
                     label    = "Calories",
-                    value    = "${state.calculatedCalories}",
+                    value    = "${state.finalCalories}",
                     unit     = "kcal",
                     color    = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
                 MacroResultCard(
                     label    = "Protein",
-                    value    = "${state.calculatedProtein}",
+                    value    = "${state.finalProtein}",
                     unit     = "g",
                     color    = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.weight(1f)
                 )
             }
-            Text(
-                text = if (state.goal == Goal.BODY_RECOMPOSITION)
-                    "High protein preserves muscle while burning fat. Mild deficit for recomposition."
-                else
-                    "Calculated using Katch-McArdle formula and lean body mass protein guidelines.",
-                fontSize = 12.sp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-            )
+
+            // ── Edit fields (shown when editing) ──────────────────
+            if (state.isEditingTargets) {
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            "Override recommended targets",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedTextField(
+                                value = state.overrideCalories.ifBlank {
+                                    state.calculatedCalories.toString()
+                                },
+                                onValueChange = viewModel::setOverrideCalories,
+                                label = { Text("Calories") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                ),
+                                modifier = Modifier.weight(1f),
+                                suffix = { Text("kcal") }
+                            )
+                            OutlinedTextField(
+                                value = state.overrideProtein.ifBlank {
+                                    state.calculatedProtein.toString()
+                                },
+                                onValueChange = viewModel::setOverrideProtein,
+                                label = { Text("Protein") },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number
+                                ),
+                                modifier = Modifier.weight(1f),
+                                suffix = { Text("g") }
+                            )
+                        }
+                        Text(
+                            "Cards above update live as you type. Tap refresh to restore.",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
+            } else {
+                if (state.overrideCalories.isNotBlank() || state.overrideProtein.isNotBlank()) {
+                    Text(
+                        "Custom targets set. Tap the edit icon to adjust.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.tertiary
+                    )
+                } else {
+                    Text(
+                        text = if (state.goal == Goal.BODY_RECOMPOSITION)
+                            "High protein preserves muscle while burning fat. Tap edit to override."
+                        else
+                            "Calculated using Katch-McArdle formula. Tap edit to override.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                    )
+                }
+            }
         }
 
         Spacer(Modifier.height(8.dp))
