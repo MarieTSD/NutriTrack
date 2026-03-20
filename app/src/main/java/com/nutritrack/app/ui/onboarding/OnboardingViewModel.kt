@@ -15,7 +15,7 @@ data class OnboardingState(
     // Screen 1
     val name: String = "Marie",
     val age: String = "27",
-    val sex: Sex = Sex.MALE,
+    val sex: Sex = Sex.FEMALE,
     // Screen 2
     val weightKg: String = "68",
     val heightCm: String = "171",

@@ -35,7 +35,7 @@ fun WelcomeScreen(
         Spacer(Modifier.height(8.dp))
 
         Text(
-            text = "Welcome to NutriTrack 👋",
+            text = "Welcome to NutriTrack",
             fontSize = 26.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
@@ -43,7 +43,7 @@ fun WelcomeScreen(
         Text(
             text = "Let's set up your profile to calculate your personal nutrition targets.",
             fontSize = 15.sp,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         // Name

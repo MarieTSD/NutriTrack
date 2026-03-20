@@ -58,7 +58,7 @@ fun DashboardScreen(
             // ── Header ─────────────────────────────────────────────
             Column {
                 Text(
-                    text = "Hello, ${profile?.name?.ifBlank { "there" } ?: "there"} 👋",
+                    text = "Hello, ${profile?.name?.ifBlank { "there" } ?: "there"}",
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary

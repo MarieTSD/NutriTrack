@@ -6,18 +6,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 // ── Brand colors ─────────────────────────────────────────────────
-val Green80     = Color(0xFF6BCB77)
-val Green40     = Color(0xFF2E7D32)
-val GreenDark   = Color(0xFF1B5E20)
-val Teal80      = Color(0xFF4DB6AC)
-val Teal40      = Color(0xFF00796B)
+val Blue80      = Color(0xFF64B5F6)   // light blue
+val Blue40      = Color(0xFF1565C0)   // primary blue
+val BlueDark    = Color(0xFF0D47A1)   // dark blue
+val Teal80      = Color(0xFF4DD0E1)   // accent teal
+val Teal40      = Color(0xFF00838F)   // accent teal dark
+
+// ── Brand colors ─────────────────────────────────────────────────
+//val Blue80     = Color(0xFF6BCB77)
+//val Blue40     = Color(0xFF2E7D32)
+//val BlueDark   = Color(0xFF1B5E20)
+//val Teal80      = Color(0xFF4DB6AC)
+//val Teal40      = Color(0xFF00796B)
 val Orange80    = Color(0xFFFFB74D)
 val Orange40    = Color(0xFFE65100)
 val Surface     = Color(0xFFF8FBF8)
 val SurfaceDark = Color(0xFF121212)
 
 private val LightColorScheme = lightColorScheme(
-    primary          = Green40,
+    primary          = Blue40,
     onPrimary        = Color.White,
     primaryContainer = Color(0xFFC8E6C9),
     secondary        = Teal40,
@@ -30,16 +37,16 @@ private val LightColorScheme = lightColorScheme(
 )
 
 private val DarkColorScheme = darkColorScheme(
-    primary          = Green80,
+    primary          = Blue80,
     onPrimary        = Color(0xFF003910),
-    primaryContainer = GreenDark,
+    primaryContainer = BlueDark,
     secondary        = Teal80,
     onSecondary      = Color(0xFF003731),
     tertiary         = Orange80,
     background       = SurfaceDark,
     surface          = Color(0xFF1E1E1E),
     onBackground     = Color(0xFFE6E6E6),
-    onSurface        = Color(0xFFE6E6E6),
+    onSurface        = Color(0xFF9C9595),
 )
 
 @Composable
